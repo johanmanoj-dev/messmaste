@@ -4,101 +4,65 @@ import messmate.model.Admin;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
- * Admin Dashboard providing access to Bookings Overview and Meal Entry attendance.
- * Demonstrates Syllabus:
- * - Module 1: Classes & Methods
- * - Module 2: Inheritance (BaseFrame), Admin model
- * - Module 4: Swing Containers, Buttons, Event Delegation
+ * Admin Dashboard providing 3 simple options.
  */
 public class AdminDashboardFrame extends BaseFrame {
 
     private Admin currentAdmin;
 
     public AdminDashboardFrame(Admin admin) {
-        super("Messmate — Admin Control Panel", 500, 440);
+        super("Messmate - Admin Panel", 400, 320);
         this.currentAdmin = admin;
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
     }
 
     private void initUI() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 15));
 
-        // Header
-        JPanel headerPanel = createHeaderPanel(
-                "Mess Administration",
-                "Logged in as: " + currentAdmin.getFullName() + " (ID: " + currentAdmin.getUsername() + ")"
-        );
-        add(headerPanel, BorderLayout.NORTH);
+        // 1. Top Title
+        JLabel lblTitle = new JLabel("Admin: " + currentAdmin.getFullName(), JLabel.CENTER);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblTitle.setBorder(BorderFactory.createEmptyBorder(15, 10, 5, 10));
+        add(lblTitle, BorderLayout.NORTH);
 
-        // Center Action Buttons Panel
-        JPanel centerPanel = new JPanel(new GridBagLayout());
-        centerPanel.setBackground(BG_LIGHT);
+        // 2. Center Buttons
+        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 10, 15));
+        buttonPanel.setPreferredSize(new Dimension(240, 140));
 
-        JPanel buttonCard = new JPanel();
-        buttonCard.setLayout(new GridLayout(3, 1, 0, 16));
-        buttonCard.setBackground(CARD_BG);
-        buttonCard.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 224, 230), 1),
-                BorderFactory.createEmptyBorder(25, 40, 25, 40)
-        ));
+        JButton btnBookings = new JButton("Daily Bookings Summary");
+        btnBookings.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnBookings.addActionListener(e -> new AdminBookingsFrame(currentAdmin, this).setVisible(true));
+        buttonPanel.add(btnBookings);
 
-        // 1. Daily Bookings Summary Button
-        JButton btnBookings = createPrimaryButton("Daily Bookings Summary");
-        btnBookings.setPreferredSize(new Dimension(280, 45));
-        btnBookings.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new AdminBookingsFrame(currentAdmin, AdminDashboardFrame.this).setVisible(true);
+        JButton btnEntry = new JButton("Meal Entry & Attendance");
+        btnEntry.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnEntry.addActionListener(e -> new AdminEntryFrame(currentAdmin, this).setVisible(true));
+        buttonPanel.add(btnEntry);
+
+        JButton btnLogout = new JButton("Logout");
+        btnLogout.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnLogout.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this, "Do you want to log out?", "Logout", JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                new LoginFrame().setVisible(true);
+                dispose();
             }
         });
-        buttonCard.add(btnBookings);
+        buttonPanel.add(btnLogout);
 
-        // 2. Entry & Attendance Button
-        JButton btnEntry = createButton("Meal Entry & Attendance", SECONDARY_COLOR, Color.WHITE);
-        btnEntry.setPreferredSize(new Dimension(280, 45));
-        btnEntry.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new AdminEntryFrame(currentAdmin, AdminDashboardFrame.this).setVisible(true);
-            }
-        });
-        buttonCard.add(btnEntry);
+        centerWrapper.add(buttonPanel);
+        add(centerWrapper, BorderLayout.CENTER);
 
-        // 3. Logout Button
-        JButton btnLogout = createDangerButton("Sign Out");
-        btnLogout.setPreferredSize(new Dimension(280, 45));
-        btnLogout.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int confirm = JOptionPane.showConfirmDialog(
-                        AdminDashboardFrame.this,
-                        "Are you sure you want to sign out from administrator portal?",
-                        "Confirm Logout",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (confirm == JOptionPane.YES_OPTION) {
-                    new LoginFrame().setVisible(true);
-                    dispose();
-                }
-            }
-        });
-        buttonCard.add(btnLogout);
-
-        centerPanel.add(buttonCard);
-        add(centerPanel, BorderLayout.CENTER);
-
-        // Footer status
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        footer.setBackground(BG_LIGHT);
-        JLabel lblNotice = new JLabel("Messmate Hostel Mess Management System v1.0");
-        lblNotice.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        lblNotice.setForeground(Color.GRAY);
-        footer.add(lblNotice);
-        add(footer, BorderLayout.SOUTH);
+        // 3. Bottom Note
+        JLabel lblNote = new JLabel("Messmate Hostel Mess System", JLabel.CENTER);
+        lblNote.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        lblNote.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        add(lblNote, BorderLayout.SOUTH);
     }
 }

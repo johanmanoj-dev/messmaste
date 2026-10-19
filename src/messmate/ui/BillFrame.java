@@ -6,20 +6,17 @@ import messmate.service.BookingService;
 import messmate.service.IBookingService;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.Month;
 import java.time.format.TextStyle;
 import java.util.Locale;
+import java.util.Vector;
 
 /**
- * Screen displaying the real-time current month's bill counter
- * and past months' bill summary cards.
- * Demonstrates Syllabus:
- * - Module 1: Primitive types, arithmetic operators
- * - Module 2: Method Overloading (calls calculateBill(id) and calculateBill(id, month, year))
- * - Module 4: Swing UI hierarchy, borders, custom card layouts
+ * Screen displaying the student's monthly bill.
+ * Simple, standard college-level Swing GUI.
  */
 public class BillFrame extends BaseFrame {
 
@@ -28,7 +25,7 @@ public class BillFrame extends BaseFrame {
     private IBookingService bookingService;
 
     public BillFrame(Student student, JFrame parent) {
-        super("Messmate — Mess Bill Summary", 560, 620);
+        super("Messmate - Monthly Bill", 450, 420);
         this.currentStudent = student;
         this.parentDashboard = parent;
         this.bookingService = new BookingService();
@@ -36,164 +33,87 @@ public class BillFrame extends BaseFrame {
     }
 
     private void initUI() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
 
-        // Header
-        JPanel headerPanel = createHeaderPanel(
-                "Mess Bill Overview",
-                "Student: " + currentStudent.getFullName() + " | Room No: " + currentStudent.getRoomNumber()
-        );
-        add(headerPanel, BorderLayout.NORTH);
+        // 1. Top Panel (Current Month Bill Counter)
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
 
-        JPanel mainContent = new JPanel();
-        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setBackground(BG_LIGHT);
-        mainContent.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
-
-        // --- 1. Real-Time Current Month Counter Card ---
         LocalDate now = LocalDate.now();
-        String currentMonthName = now.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
+        String currentMonth = now.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + now.getYear();
 
-        JPanel currentMonthCard = new JPanel(new BorderLayout(15, 10));
-        currentMonthCard.setBackground(CARD_BG);
-        currentMonthCard.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(PRIMARY_COLOR, 2),
-                BorderFactory.createEmptyBorder(18, 20, 18, 20)
-        ));
-
-        JPanel labelPanel = new JPanel();
-        labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.Y_AXIS));
-        labelPanel.setBackground(CARD_BG);
-
-        JLabel lblCounterTitle = new JLabel("CURRENT MONTH: " + currentMonthName.toUpperCase() + " " + now.getYear());
-        lblCounterTitle.setFont(new Font("SansSerif", Font.BOLD, 13));
-        lblCounterTitle.setForeground(PRIMARY_COLOR);
-        labelPanel.add(lblCounterTitle);
-
-        JLabel lblCounterSub = new JLabel("Live automated total from confirmed bookings");
-        lblCounterSub.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        lblCounterSub.setForeground(Color.GRAY);
-        labelPanel.add(lblCounterSub);
-
-        currentMonthCard.add(labelPanel, BorderLayout.CENTER);
-
-        // Fetch current month total (Method Overloading 1: calculateBill(studentId))
         double currentTotal = 0.0;
         try {
+            // Method Overloading 1 (Module 2): calculateBill(studentId)
             currentTotal = bookingService.calculateBill(currentStudent.getId());
         } catch (SQLException ex) {
-            showError("Could not retrieve current month bill: " + ex.getMessage());
+            showError("Error calculating bill: " + ex.getMessage());
         }
 
-        JLabel lblCurrentAmount = new JLabel("₹ " + String.format("%.2f", currentTotal));
-        lblCurrentAmount.setFont(new Font("SansSerif", Font.BOLD, 26));
-        lblCurrentAmount.setForeground(ACCENT_COLOR);
-        currentMonthCard.add(lblCurrentAmount, BorderLayout.EAST);
+        JLabel lblMonth = new JLabel("Current Month: " + currentMonth, JLabel.CENTER);
+        lblMonth.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        lblMonth.setAlignmentX(Component.CENTER_ALIGNMENT);
+        topPanel.add(lblMonth);
 
-        mainContent.add(currentMonthCard);
-        mainContent.add(Box.createRigidArea(new Dimension(0, 15)));
+        JLabel lblCounter = new JLabel("Total Bill: ₹ " + String.format("%.2f", currentTotal), JLabel.CENTER);
+        lblCounter.setFont(new Font("SansSerif", Font.BOLD, 20));
+        lblCounter.setForeground(new Color(24, 76, 120));
+        lblCounter.setAlignmentX(Component.CENTER_ALIGNMENT);
+        topPanel.add(lblCounter);
 
-        // --- 2. Fixed Tariff Rates Strip ---
-        JPanel tariffStrip = new JPanel(new GridLayout(1, 4, 8, 0));
-        tariffStrip.setBackground(BG_LIGHT);
-        tariffStrip.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        JLabel lblRates = new JLabel("Fixed Rates: Breakfast ₹30 | Lunch ₹50 | Snacks ₹20 | Dinner ₹50", JLabel.CENTER);
+        lblRates.setFont(new Font("SansSerif", Font.ITALIC, 11));
+        lblRates.setAlignmentX(Component.CENTER_ALIGNMENT);
+        topPanel.add(lblRates);
 
-        tariffStrip.add(createTariffPill("Breakfast", "₹" + (int)MealPricing.BREAKFAST_PRICE));
-        tariffStrip.add(createTariffPill("Lunch", "₹" + (int)MealPricing.LUNCH_PRICE));
-        tariffStrip.add(createTariffPill("Snacks", "₹" + (int)MealPricing.SNACKS_PRICE));
-        tariffStrip.add(createTariffPill("Dinner", "₹" + (int)MealPricing.DINNER_PRICE));
+        add(topPanel, BorderLayout.NORTH);
 
-        mainContent.add(tariffStrip);
-        mainContent.add(Box.createRigidArea(new Dimension(0, 20)));
+        // 2. Center: Past Months Table
+        Vector<String> columns = new Vector<>();
+        columns.add("Past Month");
+        columns.add("Bill Amount");
 
-        // --- 3. Past Months' Billing Cards ---
-        JLabel lblPastTitle = new JLabel("Past Billing History");
-        lblPastTitle.setFont(SUBTITLE_FONT);
-        lblPastTitle.setForeground(TEXT_DARK);
-        lblPastTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainContent.add(lblPastTitle);
-        mainContent.add(Box.createRigidArea(new Dimension(0, 10)));
+        Vector<Vector<Object>> data = new Vector<>();
 
-        // Display previous 4 months
-        boolean hasPast = false;
+        // Check previous 4 months (Method Overloading 2: calculateBill(id, month, year))
         for (int i = 1; i <= 4; i++) {
             LocalDate pastDate = now.minusMonths(i);
-            int pastMonth = pastDate.getMonthValue();
-            int pastYear = pastDate.getYear();
-
             try {
-                // Method Overloading 2 (Module 2 Polymorphism): calculateBill(id, month, year)
-                double pastBill = bookingService.calculateBill(currentStudent.getId(), pastMonth, pastYear);
-
+                double pastBill = bookingService.calculateBill(
+                        currentStudent.getId(), pastDate.getMonthValue(), pastDate.getYear()
+                );
                 if (pastBill > 0.0) {
-                    hasPast = true;
-                    String pMonthName = pastDate.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH);
-                    mainContent.add(createPastMonthCard(pMonthName + " " + pastYear, pastBill));
-                    mainContent.add(Box.createRigidArea(new Dimension(0, 8)));
+                    Vector<Object> row = new Vector<>();
+                    row.add(pastDate.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + pastDate.getYear());
+                    row.add("₹ " + String.format("%.2f", pastBill));
+                    data.add(row);
                 }
             } catch (SQLException ignored) {}
         }
 
-        if (!hasPast) {
-            JLabel lblNoPast = new JLabel("No previous billing history found.");
-            lblNoPast.setFont(BODY_FONT);
-            lblNoPast.setForeground(Color.GRAY);
-            mainContent.add(lblNoPast);
-        }
+        DefaultTableModel tableModel = new DefaultTableModel(data, columns) {
+            @Override
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
 
-        JScrollPane scrollPane = new JScrollPane(mainContent);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setBorder(null);
-        add(scrollPane, BorderLayout.CENTER);
+        JTable tblPastBills = new JTable(tableModel);
+        tblPastBills.setRowHeight(22);
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBorder(BorderFactory.createTitledBorder("Past Months' Billing Records"));
+        tablePanel.add(new JScrollPane(tblPastBills), BorderLayout.CENTER);
 
-        // Bottom Bar
-        JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomBar.setBackground(BG_LIGHT);
-        JButton btnBack = createButton("Back to Dashboard", new Color(120, 130, 140), Color.WHITE);
+        add(tablePanel, BorderLayout.CENTER);
+
+        // 3. Bottom Button
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        JButton btnBack = new JButton("Back to Dashboard");
         btnBack.addActionListener(e -> {
             parentDashboard.setVisible(true);
             dispose();
         });
-        bottomBar.add(btnBack);
-        add(bottomBar, BorderLayout.SOUTH);
-    }
+        bottomPanel.add(btnBack);
 
-    private JPanel createTariffPill(String name, String price) {
-        JPanel pill = new JPanel(new BorderLayout());
-        pill.setBackground(new Color(230, 238, 248));
-        pill.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(180, 205, 230), 1),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)
-        ));
-        JLabel lblName = new JLabel(name, SwingConstants.CENTER);
-        lblName.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        JLabel lblPrice = new JLabel(price, SwingConstants.CENTER);
-        lblPrice.setFont(new Font("SansSerif", Font.BOLD, 12));
-        lblPrice.setForeground(PRIMARY_COLOR);
-
-        pill.add(lblName, BorderLayout.NORTH);
-        pill.add(lblPrice, BorderLayout.SOUTH);
-        return pill;
-    }
-
-    private JPanel createPastMonthCard(String monthYear, double amount) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(CARD_BG);
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 225, 230), 1),
-                BorderFactory.createEmptyBorder(10, 15, 10, 15)
-        ));
-
-        JLabel lblTitle = new JLabel(monthYear);
-        lblTitle.setFont(BODY_FONT);
-
-        JLabel lblAmount = new JLabel("₹ " + String.format("%.2f", amount));
-        lblAmount.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblAmount.setForeground(PRIMARY_COLOR);
-
-        card.add(lblTitle, BorderLayout.WEST);
-        card.add(lblAmount, BorderLayout.EAST);
-        return card;
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 }

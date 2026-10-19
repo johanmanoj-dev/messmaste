@@ -6,11 +6,8 @@ import messmate.service.BookingService;
 import messmate.service.IBookingService;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -19,11 +16,8 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Screen for marking student meal consumption attendance.
- * Demonstrates Syllabus:
- * - Module 1: Control structures, Vector data manipulation
- * - Module 2: Inheritance (BaseFrame)
- * - Module 4: JComboBox (Drop-down), JTable with Boolean Checkbox cells, Event Handling, JDBC Update
+ * Screen for marking student dining attendance.
+ * Simple, standard college-level Swing GUI.
  */
 public class AdminEntryFrame extends BaseFrame {
 
@@ -31,18 +25,14 @@ public class AdminEntryFrame extends BaseFrame {
     private JFrame parentDashboard;
     private IBookingService bookingService;
 
-    private JTextField txtEntryDate;
-    private JComboBox<String> cmbMealType;
-    private JButton btnLoadStudents;
-    private JTable tblAttendance;
+    private JTextField txtDate;
+    private JComboBox<String> cmbMeal;
+    private JTable tblStudents;
     private DefaultTableModel tableModel;
-    private JButton btnSaveAttendance;
-
-    // Keep track of loaded booking models for batch saving
-    private List<MealBooking> currentLoadedBookings = new ArrayList<>();
+    private List<MealBooking> loadedBookings = new ArrayList<>();
 
     public AdminEntryFrame(Admin admin, JFrame parent) {
-        super("Messmate — Meal Entry & Attendance Tracker", 700, 580);
+        super("Messmate - Meal Entry & Attendance", 600, 450);
         this.currentAdmin = admin;
         this.parentDashboard = parent;
         this.bookingService = new BookingService();
@@ -50,131 +40,86 @@ public class AdminEntryFrame extends BaseFrame {
     }
 
     private void initUI() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
 
-        // Header
-        JPanel headerPanel = createHeaderPanel(
-                "Meal Entry & Attendance Tracker",
-                "Select meal session and mark student attendance upon dining hall entry"
-        );
-        add(headerPanel, BorderLayout.NORTH);
+        // 1. Top Filter Row (Date + Meal Dropdown + Load Button)
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
-        // Top Filter Bar (Date & Meal Dropdown)
-        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12));
-        filterBar.setBackground(BG_LIGHT);
+        topPanel.add(new JLabel("Date (YYYY-MM-DD):"));
+        txtDate = new JTextField(LocalDate.now().plusDays(2).toString(), 10);
+        topPanel.add(txtDate);
 
-        filterBar.add(new JLabel("Date (YYYY-MM-DD):"));
-        txtEntryDate = new JTextField(LocalDate.now().plusDays(2).toString(), 10);
-        txtEntryDate.setFont(BODY_FONT);
-        filterBar.add(txtEntryDate);
-
-        filterBar.add(new JLabel("Meal Type:"));
+        topPanel.add(new JLabel("Meal:"));
         String[] meals = {"Breakfast", "Lunch", "Evening Snacks", "Dinner"};
-        cmbMealType = new JComboBox<>(meals);
-        cmbMealType.setFont(BODY_FONT);
-        filterBar.add(cmbMealType);
+        cmbMeal = new JComboBox<>(meals);
+        topPanel.add(cmbMeal);
 
-        btnLoadStudents = createPrimaryButton("Load Students");
-        btnLoadStudents.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadStudentsForSelectedSession();
-            }
-        });
-        filterBar.add(btnLoadStudents);
+        JButton btnLoad = new JButton("Load Students");
+        btnLoad.addActionListener(e -> loadStudents());
+        topPanel.add(btnLoad);
 
-        add(filterBar, BorderLayout.NORTH);
+        add(topPanel, BorderLayout.NORTH);
 
-        // Center Table with Interactive Boolean Checkboxes
+        // 2. Center Table (Interactive Checkboxes for Attendance)
         Vector<String> columns = new Vector<>();
-        columns.add("Booking ID");
         columns.add("Room No");
         columns.add("Student Name");
-        columns.add("Meal Consumed (Attended)");
+        columns.add("Attended (Mark)");
 
         tableModel = new DefaultTableModel(new Vector<Vector<Object>>(), columns) {
             @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 3) {
-                    return Boolean.class; // Natively renders as JCheckBox in JTable!
-                }
+            public Class<?> getColumnClass(int col) {
+                if (col == 2) return Boolean.class; // Checkbox column
                 return Object.class;
             }
 
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 3; // Only the attendance checkbox column is editable
+            public boolean isCellEditable(int row, int col) {
+                return col == 2; // only checkbox is editable
             }
         };
 
-        tblAttendance = new JTable(tableModel);
-        tblAttendance.setFont(BODY_FONT);
-        tblAttendance.setRowHeight(28);
-        tblAttendance.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
-        tblAttendance.getTableHeader().setBackground(new Color(230, 238, 248));
+        tblStudents = new JTable(tableModel);
+        tblStudents.setRowHeight(24);
+        add(new JScrollPane(tblStudents), BorderLayout.CENTER);
 
-        // Center align Room No
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        tblAttendance.getColumnModel().getColumn(0).setPreferredWidth(80);
-        tblAttendance.getColumnModel().getColumn(1).setPreferredWidth(90);
-        tblAttendance.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
-        tblAttendance.getColumnModel().getColumn(2).setPreferredWidth(250);
-        tblAttendance.getColumnModel().getColumn(3).setPreferredWidth(160);
+        // 3. Bottom Button Row
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
-        JScrollPane scrollPane = new JScrollPane(tblAttendance);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
+        JButton btnSave = new JButton("Save Attendance");
+        btnSave.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btnSave.addActionListener(e -> saveAttendance());
+        bottomPanel.add(btnSave);
 
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(BG_LIGHT);
-        centerPanel.add(filterBar, BorderLayout.NORTH);
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
-        add(centerPanel, BorderLayout.CENTER);
-
-        // Bottom Action Bar
-        JPanel bottomBar = new JPanel(new BorderLayout());
-        bottomBar.setBackground(BG_LIGHT);
-        bottomBar.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-
-        btnSaveAttendance = createAccentButton("Save Attendance to Database");
-        btnSaveAttendance.addActionListener(new SaveAttendanceListener());
-        bottomBar.add(btnSaveAttendance, BorderLayout.WEST);
-
-        JButton btnBack = createButton("Back to Dashboard", new Color(120, 130, 140), Color.WHITE);
+        JButton btnBack = new JButton("Back to Dashboard");
         btnBack.addActionListener(e -> {
             parentDashboard.setVisible(true);
             dispose();
         });
-        bottomBar.add(btnBack, BorderLayout.EAST);
+        bottomPanel.add(btnBack);
 
-        add(bottomBar, BorderLayout.SOUTH);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    /**
-     * Loads the registered students for the selected date and meal type.
-     */
-    private void loadStudentsForSelectedSession() {
-        String dateStr = txtEntryDate.getText().trim();
-        String selectedMeal = (String) cmbMealType.getSelectedItem();
+    private void loadStudents() {
+        String dateStr = txtDate.getText().trim();
+        String selectedMeal = (String) cmbMeal.getSelectedItem();
 
         try {
             LocalDate date = LocalDate.parse(dateStr);
-            currentLoadedBookings = bookingService.getBookingsByDateAndMeal(date, selectedMeal);
+            loadedBookings = bookingService.getBookingsByDateAndMeal(date, selectedMeal);
+            tableModel.setRowCount(0);
 
-            tableModel.setRowCount(0); // clear existing rows
-
-            if (currentLoadedBookings.isEmpty()) {
-                showInfo("No students are registered for " + selectedMeal + " on " + date + ".");
+            if (loadedBookings.isEmpty()) {
+                showInfo("No students booked for " + selectedMeal + " on " + date + ".");
                 return;
             }
 
-            for (MealBooking b : currentLoadedBookings) {
+            for (MealBooking b : loadedBookings) {
                 Vector<Object> row = new Vector<>();
-                row.add(b.getId());
                 row.add(b.getRoomNumber() != null ? b.getRoomNumber() : "-");
                 row.add(b.getStudentName() != null ? b.getStudentName() : "-");
 
-                // Get current attendance status for this specific meal
                 boolean attended = false;
                 if ("Breakfast".equalsIgnoreCase(selectedMeal)) attended = b.isBreakfastAttended();
                 else if ("Lunch".equalsIgnoreCase(selectedMeal)) attended = b.isLunchAttended();
@@ -186,49 +131,36 @@ public class AdminEntryFrame extends BaseFrame {
             }
 
         } catch (DateTimeParseException ex) {
-            showError("Invalid date format. Please use YYYY-MM-DD.");
+            showError("Invalid date format! Use YYYY-MM-DD.");
         } catch (SQLException ex) {
             showError("Database error: " + ex.getMessage());
         }
     }
 
-    /**
-     * Inner Class for saving attendance back to MySQL.
-     * Demonstrates Module 4 JDBC UPDATE operations.
-     */
-    private class SaveAttendanceListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (tableModel.getRowCount() == 0) {
-                showError("No student records loaded to save.");
-                return;
-            }
+    private void saveAttendance() {
+        if (loadedBookings.isEmpty() || tableModel.getRowCount() == 0) {
+            showError("No student records loaded.");
+            return;
+        }
 
-            String selectedMeal = (String) cmbMealType.getSelectedItem();
-            int updatedCount = 0;
+        String selectedMeal = (String) cmbMeal.getSelectedItem();
+        int count = 0;
 
-            try {
-                for (int i = 0; i < tableModel.getRowCount(); i++) {
-                    int bookingId = (int) tableModel.getValueAt(i, 0);
-                    Boolean attended = (Boolean) tableModel.getValueAt(i, 3);
-                    boolean isAttended = (attended != null && attended);
+        try {
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                int bookingId = loadedBookings.get(i).getId();
+                Boolean attended = (Boolean) tableModel.getValueAt(i, 2);
+                boolean isAttended = (attended != null && attended);
 
-                    boolean success = bookingService.updateAttendance(bookingId, selectedMeal, isAttended);
-                    if (success) {
-                        updatedCount++;
-                    }
+                if (bookingService.updateAttendance(bookingId, selectedMeal, isAttended)) {
+                    count++;
                 }
-
-                JOptionPane.showMessageDialog(
-                        AdminEntryFrame.this,
-                        "Attendance updated successfully for " + updatedCount + " student(s) for " + selectedMeal + "!",
-                        "Attendance Saved",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-
-            } catch (SQLException ex) {
-                showError("Error saving attendance to database: " + ex.getMessage());
             }
+
+            showInfo("Attendance updated successfully for " + count + " student(s)!");
+
+        } catch (SQLException ex) {
+            showError("Error saving attendance: " + ex.getMessage());
         }
     }
 }

@@ -20,12 +20,6 @@ public class Main {
         System.out.println("  Object Oriented Programming Course Project      ");
         System.out.println("==================================================");
 
-        // Set Cross-platform or System Look and Feel for clean appearance
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            System.err.println("Note: Using default Look and Feel (" + e.getMessage() + ")");
-        }
 
         // Initialize Database Tables and Seeds
         try {

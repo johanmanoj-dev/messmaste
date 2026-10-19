@@ -8,108 +8,71 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Student Dashboard providing access to Book Meal, View Bookings, and Bill.
- * Demonstrates Syllabus:
- * - Module 1: Classes & Methods
- * - Module 2: Inheritance (BaseFrame), Polymorphic Student model
- * - Module 4: Swing Layout Managers (BorderLayout, GridLayout), Buttons, Event Handling
+ * Student Dashboard providing 4 simple navigation buttons.
  */
 public class StudentDashboardFrame extends BaseFrame {
 
     private Student currentStudent;
 
     public StudentDashboardFrame(Student student) {
-        super("Messmate — Student Dashboard", 500, 480);
+        super("Messmate - Student Dashboard", 420, 360);
         this.currentStudent = student;
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
     }
 
     private void initUI() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 15));
 
-        // Header
-        JPanel headerPanel = createHeaderPanel(
-                "Welcome, " + currentStudent.getFullName(),
-                "Room No: " + currentStudent.getRoomNumber() + " | Student Mess Portal"
+        // 1. Top Header Label
+        JLabel lblWelcome = new JLabel(
+                "Welcome, " + currentStudent.getFullName() + " (Room " + currentStudent.getRoomNumber() + ")",
+                JLabel.CENTER
         );
-        add(headerPanel, BorderLayout.NORTH);
+        lblWelcome.setFont(new Font("SansSerif", Font.BOLD, 15));
+        lblWelcome.setBorder(BorderFactory.createEmptyBorder(15, 10, 5, 10));
+        add(lblWelcome, BorderLayout.NORTH);
 
-        // Center Action Buttons Panel
-        JPanel centerPanel = new JPanel(new GridBagLayout());
-        centerPanel.setBackground(BG_LIGHT);
+        // 2. Center Buttons (Simple GridLayout)
+        JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 1, 10, 12));
+        buttonPanel.setPreferredSize(new Dimension(240, 180));
 
-        JPanel buttonCard = new JPanel();
-        buttonCard.setLayout(new GridLayout(4, 1, 0, 15));
-        buttonCard.setBackground(CARD_BG);
-        buttonCard.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 224, 230), 1),
-                BorderFactory.createEmptyBorder(25, 40, 25, 40)
-        ));
+        JButton btnBookMeal = new JButton("Book a Meal");
+        btnBookMeal.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnBookMeal.addActionListener(e -> new BookMealFrame(currentStudent, this).setVisible(true));
+        buttonPanel.add(btnBookMeal);
 
-        // 1. Book Meal Button
-        JButton btnBookMeal = createPrimaryButton("Book a Meal");
-        btnBookMeal.setPreferredSize(new Dimension(280, 45));
-        btnBookMeal.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new BookMealFrame(currentStudent, StudentDashboardFrame.this).setVisible(true);
+        JButton btnViewBookings = new JButton("View Bookings");
+        btnViewBookings.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnViewBookings.addActionListener(e -> new ViewBookingsFrame(currentStudent, this).setVisible(true));
+        buttonPanel.add(btnViewBookings);
+
+        JButton btnBill = new JButton("Monthly Bill");
+        btnBill.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnBill.addActionListener(e -> new BillFrame(currentStudent, this).setVisible(true));
+        buttonPanel.add(btnBill);
+
+        JButton btnLogout = new JButton("Logout");
+        btnLogout.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnLogout.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    this, "Do you want to log out?", "Logout", JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                new LoginFrame().setVisible(true);
+                dispose();
             }
         });
-        buttonCard.add(btnBookMeal);
+        buttonPanel.add(btnLogout);
 
-        // 2. View Bookings Button
-        JButton btnViewBookings = createButton("View Bookings", SECONDARY_COLOR, Color.WHITE);
-        btnViewBookings.setPreferredSize(new Dimension(280, 45));
-        btnViewBookings.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new ViewBookingsFrame(currentStudent, StudentDashboardFrame.this).setVisible(true);
-            }
-        });
-        buttonCard.add(btnViewBookings);
+        centerWrapper.add(buttonPanel);
+        add(centerWrapper, BorderLayout.CENTER);
 
-        // 3. Bill Button
-        JButton btnBill = createAccentButton("Monthly Mess Bill");
-        btnBill.setPreferredSize(new Dimension(280, 45));
-        btnBill.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new BillFrame(currentStudent, StudentDashboardFrame.this).setVisible(true);
-            }
-        });
-        buttonCard.add(btnBill);
-
-        // 4. Logout Button
-        JButton btnLogout = createDangerButton("Sign Out");
-        btnLogout.setPreferredSize(new Dimension(280, 45));
-        btnLogout.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int confirm = JOptionPane.showConfirmDialog(
-                        StudentDashboardFrame.this,
-                        "Are you sure you want to log out?",
-                        "Logout Confirmation",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (confirm == JOptionPane.YES_OPTION) {
-                    new LoginFrame().setVisible(true);
-                    dispose();
-                }
-            }
-        });
-        buttonCard.add(btnLogout);
-
-        centerPanel.add(buttonCard);
-        add(centerPanel, BorderLayout.CENTER);
-
-        // Footer note
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        footer.setBackground(BG_LIGHT);
-        JLabel lblNotice = new JLabel("Notice: Meal bookings must be submitted at least 2 days in advance.");
+        // 3. Bottom Notice
+        JLabel lblNotice = new JLabel("Notice: Bookings must be made at least 2 days ahead.", JLabel.CENTER);
         lblNotice.setFont(new Font("SansSerif", Font.ITALIC, 11));
-        lblNotice.setForeground(new Color(108, 117, 125));
-        footer.add(lblNotice);
-        add(footer, BorderLayout.SOUTH);
+        lblNotice.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        add(lblNotice, BorderLayout.SOUTH);
     }
 }
