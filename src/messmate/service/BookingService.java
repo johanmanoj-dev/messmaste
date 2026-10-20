@@ -5,66 +5,52 @@ import messmate.exception.DuplicateBookingException;
 import messmate.exception.InvalidBookingDateException;
 import messmate.model.MealBooking;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service implementation for meal bookings.
+ * Service implementation for meal booking operations.
  * Demonstrates Syllabus:
  * - Module 1: Control structures (if-else, while loop)
- * - Module 2: Method Overloading (calculateBill methods)
- * - Module 3: Implementing an interface, checked exceptions
- * - Module 4: JDBC CRUD operations using PreparedStatement and ResultSet
+ * - Module 2: Method Overloading (calculateBill)
+ * - Module 3: Implementing an interface, Custom Checked Exceptions
+ * - Module 4: JDBC CRUD Operations with PreparedStatement and ResultSet
  */
 public class BookingService implements IBookingService {
 
-    /**
-     * Books a meal for a student after strictly checking:
-     * 1. Date is at least 2 days in the future from today.
-     * 2. Date is not already booked.
-     */
     @Override
     public boolean bookMeal(MealBooking booking) throws InvalidBookingDateException, DuplicateBookingException, SQLException {
         LocalDate today = LocalDate.now();
         LocalDate targetDate = booking.getMealDate();
 
-        // Business Rule: Booking date must be at least 2 days later than today
-        // E.g. If today is Monday (19th), earliest allowed booking is Wednesday (21st)
+        // 1. Advance Notice Validation (At least 2 days in advance)
         long daysAhead = ChronoUnit.DAYS.between(today, targetDate);
         if (daysAhead < 2) {
             throw new InvalidBookingDateException(
-                    "Bookings must be made at least 2 days in advance! Earliest allowed date is: "
-                    + today.plusDays(2).toString()
+                    "Bookings must be at least 2 days in advance! Earliest date: " + today.plusDays(2)
             );
         }
 
-        // Business Rule: At least one meal must be selected
+        // 2. Meal Selection Validation
         if (!booking.isAnyMealSelected()) {
-            throw new InvalidBookingDateException("Please select at least one meal to book.");
+            throw new InvalidBookingDateException("Please select at least one meal.");
         }
 
-        // Check if student has already booked for this target date
+        // 3. Duplicate Booking Validation
         if (isDateAlreadyBooked(booking.getStudentId(), targetDate)) {
-            throw new DuplicateBookingException("You have already booked meals for " + targetDate + ".");
+            throw new DuplicateBookingException("You already have a booking for " + targetDate + ".");
         }
 
-        // JDBC CRUD - INSERT (Create Operation)
-        String sql = "INSERT INTO bookings (student_id, meal_date, booked_at, "
-                + "breakfast, lunch, snacks, dinner, total_cost) "
+        // 4. JDBC CRUD: INSERT (Create)
+        String sql = "INSERT INTO bookings (student_id, meal_date, booked_at, breakfast, lunch, snacks, dinner, total_cost) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try {
-            ps = conn.prepareStatement(sql);
             ps.setInt(1, booking.getStudentId());
             ps.setDate(2, Date.valueOf(booking.getMealDate()));
             ps.setDate(3, Date.valueOf(today));
@@ -74,70 +60,44 @@ public class BookingService implements IBookingService {
             ps.setBoolean(7, booking.isDinner());
             ps.setDouble(8, booking.getTotalCost());
 
-            int rows = ps.executeUpdate();
-            return rows > 0;
-        } finally {
-            if (ps != null) {
-                try { ps.close(); } catch (SQLException ignored) {}
-            }
+            return ps.executeUpdate() > 0;
         }
     }
 
-    /**
-     * Checks if a booking already exists for a student on a specific date.
-     */
     @Override
     public boolean isDateAlreadyBooked(int studentId, LocalDate mealDate) throws SQLException {
         String sql = "SELECT id FROM bookings WHERE student_id = ? AND meal_date = ?";
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
 
-        try {
-            ps = conn.prepareStatement(sql);
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, studentId);
             ps.setDate(2, Date.valueOf(mealDate));
-            rs = ps.executeQuery();
-            return rs.next(); // true if record exists
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
-            if (ps != null) try { ps.close(); } catch (SQLException ignored) {}
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // true if record already exists
+            }
         }
     }
 
-    /**
-     * Fetches all bookings made by a student ordered chronologically (newest first).
-     */
     @Override
     public List<MealBooking> getBookingsByStudent(int studentId) throws SQLException {
         List<MealBooking> list = new ArrayList<>();
-        String sql = "SELECT b.*, u.full_name, u.username AS room_no FROM bookings b "
-                + "JOIN users u ON b.student_id = u.id "
-                + "WHERE b.student_id = ? ORDER BY b.meal_date DESC";
+        String sql = "SELECT * FROM bookings WHERE student_id = ? ORDER BY meal_date DESC";
 
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try {
-            ps = conn.prepareStatement(sql);
             ps.setInt(1, studentId);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                MealBooking mb = mapResultSetToBooking(rs);
-                list.add(mb);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSet(rs));
+                }
             }
-            return list;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
-            if (ps != null) try { ps.close(); } catch (SQLException ignored) {}
         }
+        return list;
     }
 
-    /**
-     * Fetches all bookings for a specific date (Admin View).
-     */
     @Override
     public List<MealBooking> getBookingsByDate(LocalDate date) throws SQLException {
         List<MealBooking> list = new ArrayList<>();
@@ -145,72 +105,47 @@ public class BookingService implements IBookingService {
                 + "JOIN users u ON b.student_id = u.id "
                 + "WHERE b.meal_date = ? ORDER BY u.username ASC";
 
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try {
-            ps = conn.prepareStatement(sql);
             ps.setDate(1, Date.valueOf(date));
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                MealBooking mb = mapResultSetToBooking(rs);
-                list.add(mb);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MealBooking mb = mapResultSet(rs);
+                    mb.setStudentName(rs.getString("full_name"));
+                    mb.setRoomNumber(rs.getString("room_no"));
+                    list.add(mb);
+                }
             }
-            return list;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
-            if (ps != null) try { ps.close(); } catch (SQLException ignored) {}
         }
+        return list;
     }
 
-    /**
-     * Fetches students who booked a specific meal on a given date (Admin Entry View).
-     */
     @Override
     public List<MealBooking> getBookingsByDateAndMeal(LocalDate date, String mealType) throws SQLException {
         List<MealBooking> list = new ArrayList<>();
-        String mealColumn;
-
-        switch (mealType.toLowerCase()) {
-            case "breakfast": mealColumn = "b.breakfast"; break;
-            case "lunch": mealColumn = "b.lunch"; break;
-            case "evening snacks":
-            case "snacks": mealColumn = "b.snacks"; break;
-            case "dinner": mealColumn = "b.dinner"; break;
-            default: mealColumn = "b.breakfast"; break;
-        }
+        String mealColumn = getColumnForMeal(mealType);
 
         String sql = "SELECT b.*, u.full_name, u.username AS room_no FROM bookings b "
                 + "JOIN users u ON b.student_id = u.id "
-                + "WHERE b.meal_date = ? AND " + mealColumn + " = TRUE "
-                + "ORDER BY u.username ASC";
+                + "WHERE b.meal_date = ? AND " + mealColumn + " = TRUE ORDER BY u.username ASC";
 
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try {
-            ps = conn.prepareStatement(sql);
             ps.setDate(1, Date.valueOf(date));
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                MealBooking mb = mapResultSetToBooking(rs);
-                list.add(mb);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MealBooking mb = mapResultSet(rs);
+                    mb.setStudentName(rs.getString("full_name"));
+                    mb.setRoomNumber(rs.getString("room_no"));
+                    list.add(mb);
+                }
             }
-            return list;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
-            if (ps != null) try { ps.close(); } catch (SQLException ignored) {}
         }
+        return list;
     }
 
-    /**
-     * Updates meal attendance status (marked by Admin).
-     * JDBC CRUD - UPDATE Operation.
-     */
     @Override
     public boolean updateAttendance(int bookingId, String mealType, boolean attended) throws SQLException {
         String column;
@@ -224,63 +159,56 @@ public class BookingService implements IBookingService {
         }
 
         String sql = "UPDATE bookings SET " + column + " = ? WHERE id = ?";
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
 
-        try {
-            ps = conn.prepareStatement(sql);
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setBoolean(1, attended);
             ps.setInt(2, bookingId);
             return ps.executeUpdate() > 0;
-        } finally {
-            if (ps != null) try { ps.close(); } catch (SQLException ignored) {}
         }
     }
 
-    /**
-     * Method Overloading 1 (Module 2 Polymorphism):
-     * Calculates the current month's bill total for a student.
-     */
+    // Method Overloading 1 (Module 2 Polymorphism)
     @Override
     public double calculateBill(int studentId) throws SQLException {
         LocalDate now = LocalDate.now();
         return calculateBill(studentId, now.getMonthValue(), now.getYear());
     }
 
-    /**
-     * Method Overloading 2 (Module 2 Polymorphism):
-     * Calculates the bill total for a student for a specific month and year.
-     */
+    // Method Overloading 2 (Module 2 Polymorphism)
     @Override
     public double calculateBill(int studentId, int month, int year) throws SQLException {
         String sql = "SELECT COALESCE(SUM(total_cost), 0.0) AS total_bill FROM bookings "
                 + "WHERE student_id = ? AND MONTH(meal_date) = ? AND YEAR(meal_date) = ?";
 
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try {
-            ps = conn.prepareStatement(sql);
             ps.setInt(1, studentId);
             ps.setInt(2, month);
             ps.setInt(3, year);
-            rs = ps.executeQuery();
 
-            if (rs.next()) {
-                return rs.getDouble("total_bill");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("total_bill");
+                }
             }
-            return 0.0;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException ignored) {}
-            if (ps != null) try { ps.close(); } catch (SQLException ignored) {}
+        }
+        return 0.0;
+    }
+
+    private String getColumnForMeal(String mealType) {
+        switch (mealType.toLowerCase()) {
+            case "lunch": return "b.lunch";
+            case "evening snacks":
+            case "snacks": return "b.snacks";
+            case "dinner": return "b.dinner";
+            default: return "b.breakfast";
         }
     }
 
-    /**
-     * Helper to map a JDBC ResultSet row to a MealBooking model object.
-     */
-    private MealBooking mapResultSetToBooking(ResultSet rs) throws SQLException {
+    private MealBooking mapResultSet(ResultSet rs) throws SQLException {
         MealBooking mb = new MealBooking();
         mb.setId(rs.getInt("id"));
         mb.setStudentId(rs.getInt("student_id"));
@@ -295,13 +223,6 @@ public class BookingService implements IBookingService {
         mb.setSnacksAttended(rs.getBoolean("snacks_attended"));
         mb.setDinnerAttended(rs.getBoolean("dinner_attended"));
         mb.setTotalCost(rs.getDouble("total_cost"));
-
-        // If joined with users table:
-        try {
-            mb.setStudentName(rs.getString("full_name"));
-            mb.setRoomNumber(rs.getString("room_no"));
-        } catch (SQLException ignored) {}
-
         return mb;
     }
 }

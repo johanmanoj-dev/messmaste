@@ -6,38 +6,25 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * Initializes database tables and seed data upon startup.
- * Demonstrates Syllabus Module 4:
- * - Executing SQL DDL statements (CREATE TABLE)
- * - Statement and ResultSet usage
- * - Try-catch-finally block error management
+ * Initializes MySQL tables and default users on startup.
+ * Demonstrates Syllabus Module 4 (JDBC Statement, DDL Execution).
  */
 public class DatabaseInitializer {
 
-    /**
-     * Initializes tables and default user seed data.
-     * @throws SQLException if a database error occurs
-     */
     public static void initialize() throws SQLException {
-        Connection conn = DBConnection.getConnection();
-        Statement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            stmt = conn.createStatement();
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
 
             // 1. Create Users Table
-            String createUsersTable = "CREATE TABLE IF NOT EXISTS users ("
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users ("
                     + "id INT AUTO_INCREMENT PRIMARY KEY, "
                     + "username VARCHAR(50) NOT NULL UNIQUE, "
                     + "password VARCHAR(50) NOT NULL, "
                     + "full_name VARCHAR(100) NOT NULL, "
-                    + "role VARCHAR(20) NOT NULL"
-                    + ")";
-            stmt.executeUpdate(createUsersTable);
+                    + "role VARCHAR(20) NOT NULL)");
 
             // 2. Create Bookings Table
-            String createBookingsTable = "CREATE TABLE IF NOT EXISTS bookings ("
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bookings ("
                     + "id INT AUTO_INCREMENT PRIMARY KEY, "
                     + "student_id INT NOT NULL, "
                     + "meal_date DATE NOT NULL, "
@@ -52,34 +39,22 @@ public class DatabaseInitializer {
                     + "dinner_attended BOOLEAN DEFAULT FALSE, "
                     + "total_cost DOUBLE NOT NULL, "
                     + "FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE, "
-                    + "UNIQUE KEY uk_student_date (student_id, meal_date)"
-                    + ")";
-            stmt.executeUpdate(createBookingsTable);
+                    + "UNIQUE KEY uk_student_date (student_id, meal_date))");
 
-            // 3. Check if Users table is empty. If so, insert initial seeds.
-            rs = stmt.executeQuery("SELECT COUNT(*) AS total FROM users");
-            if (rs.next() && rs.getInt("total") == 0) {
-                // Insert Predefined Students and Admins
-                stmt.executeUpdate("INSERT INTO users (username, password, full_name, role) VALUES "
-                        + "('101', 'pass101', 'Rahul Sharma', 'STUDENT'), "
-                        + "('102', 'pass102', 'Sneha Patel', 'STUDENT'), "
-                        + "('103', 'pass103', 'Amit Kumar', 'STUDENT'), "
-                        + "('104', 'pass104', 'Ananya Nair', 'STUDENT'), "
-                        + "('105', 'pass105', 'Rohan Das', 'STUDENT'), "
-                        + "('admin', 'admin123', 'Mess Administrator', 'ADMIN'), "
-                        + "('999', 'admin123', 'Mess Warden', 'ADMIN')");
-
-                System.out.println("Messmate: Seed users inserted successfully.");
-            }
-
-        } finally {
-            // Demonstrates proper cleanup of Statement and ResultSet (Module 4 & Module 3 finally)
-            if (rs != null) {
-                try { rs.close(); } catch (SQLException ignored) {}
-            }
-            if (stmt != null) {
-                try { stmt.close(); } catch (SQLException ignored) {}
-            }
+            // 3. Seed users using INSERT IGNORE (automatically adds any new users, skips existing ones)
+            stmt.executeUpdate("INSERT IGNORE INTO users (username, password, full_name, role) VALUES "
+                    + "('101', 'pass101', 'Rahul Sharma', 'STUDENT'), "
+                    + "('102', 'pass102', 'Sneha Patel', 'STUDENT'), "
+                    + "('103', 'pass103', 'Amit Kumar', 'STUDENT'), "
+                    + "('104', 'pass104', 'Gundalpettu Goutham GG', 'STUDENT'), "
+                    + "('105', 'pass105', 'Rohan Das', 'STUDENT'), "
+                    + "('admin', 'admin123', 'Mess Administrator', 'ADMIN'), "
+                    + "('106', 'pass104', 'Gundalpettu Goutham GG', 'STUDENT'), "
+                    + "('107', 'pass102', 'Korifia.kollam KK', 'STUDENT'), "
+                    + "('999', 'admin123', 'Mess Warden', 'ADMIN')"
+                    + "('108', 'pass102', 'Chokili salman', 'STUDENT'), "
+);
+                    
         }
     }
 }
