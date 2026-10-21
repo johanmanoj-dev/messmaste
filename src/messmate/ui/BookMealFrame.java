@@ -12,8 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -34,7 +32,6 @@ public class BookMealFrame extends BaseFrame {
     private JCheckBox chkLunch;
     private JCheckBox chkSnacks;
     private JCheckBox chkDinner;
-    private JLabel lblTotal;
     private JButton btnConfirm;
     private JButton btnBack;
 
@@ -74,26 +71,15 @@ public class BookMealFrame extends BaseFrame {
 
         // Meal Checkboxes
         centerPanel.add(new JLabel("Select Meals:"));
-        chkBreakfast = new JCheckBox("Breakfast (₹" + (int)MealPricing.BREAKFAST_PRICE + ")");
-        chkLunch = new JCheckBox("Lunch (₹" + (int)MealPricing.LUNCH_PRICE + ")");
-        chkSnacks = new JCheckBox("Evening Snacks (₹" + (int)MealPricing.SNACKS_PRICE + ")");
-        chkDinner = new JCheckBox("Dinner (₹" + (int)MealPricing.DINNER_PRICE + ")");
-
-        ItemListener updater = e -> updateTotalLabel();
-        chkBreakfast.addItemListener(updater);
-        chkLunch.addItemListener(updater);
-        chkSnacks.addItemListener(updater);
-        chkDinner.addItemListener(updater);
+        chkBreakfast = new JCheckBox("Breakfast");
+        chkLunch = new JCheckBox("Lunch");
+        chkSnacks = new JCheckBox("Evening Snacks");
+        chkDinner = new JCheckBox("Dinner");
 
         centerPanel.add(chkBreakfast);
         centerPanel.add(chkLunch);
         centerPanel.add(chkSnacks);
         centerPanel.add(chkDinner);
-
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        lblTotal = new JLabel("Total: ₹ 0.00");
-        lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
-        centerPanel.add(lblTotal);
 
         add(centerPanel, BorderLayout.CENTER);
 
@@ -112,16 +98,6 @@ public class BookMealFrame extends BaseFrame {
         bottomRow.add(btnBack);
 
         add(bottomRow, BorderLayout.SOUTH);
-    }
-
-    private void updateTotalLabel() {
-        double total = MealPricing.calculateCost(
-                chkBreakfast.isSelected(),
-                chkLunch.isSelected(),
-                chkSnacks.isSelected(),
-                chkDinner.isSelected()
-        );
-        lblTotal.setText("Total: ₹ " + String.format("%.2f", total));
     }
 
     private class ConfirmAction implements ActionListener {
@@ -158,12 +134,10 @@ public class BookMealFrame extends BaseFrame {
                 return;
             }
 
-            double totalCost = MealPricing.calculateCost(b, l, s, d);
-
             // Pop-up confirmation dialog
             int confirm = JOptionPane.showConfirmDialog(
                     BookMealFrame.this,
-                    "Do you want to confirm this booking for " + date + "?\nTotal Amount: ₹" + totalCost,
+                    "Do you want to confirm this booking for " + date + "?",
                     "Confirm Booking",
                     JOptionPane.OK_CANCEL_OPTION
             );

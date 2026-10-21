@@ -107,7 +107,6 @@ public class AdminBookingsFrame extends BaseFrame {
             tableModel.setRowCount(0);
 
             int bCount = 0, lCount = 0, sCount = 0, dCount = 0;
-            double totalRevenue = 0.0;
 
             for (MealBooking b : list) {
                 Vector<Object> row = new Vector<>();
@@ -124,7 +123,6 @@ public class AdminBookingsFrame extends BaseFrame {
                 if (b.isLunch()) lCount++;
                 if (b.isSnacks()) sCount++;
                 if (b.isDinner()) dCount++;
-                totalRevenue += b.getTotalCost();
             }
 
             lblSummary.setText("Students: " + list.size()
@@ -132,7 +130,6 @@ public class AdminBookingsFrame extends BaseFrame {
                     + " | Lunch: " + lCount
                     + " | Snacks: " + sCount
                     + " | Dinner: " + dCount
-                    + " | Total Revenue: ₹ " + String.format("%.2f", totalRevenue)
             );
 
         } catch (SQLException ex) {

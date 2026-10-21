@@ -63,11 +63,12 @@ java -cp "bin;lib/*" messmate.Main
      - **Validation Check 1**: Must be at least **2 days later than today** (enforced by Java business logic, throws `InvalidBookingDateException`).
      - **Validation Check 2**: Checks MySQL to prevent duplicate bookings for the same date (throws `DuplicateBookingException`).
      - Once verified, select meals using checkboxes:
-       - Breakfast (₹30)
-       - Lunch (₹50)
-       - Evening Snacks (₹20)
-       - Dinner (₹50)
-     - Click **Confirm Booking** $\rightarrow$ Confirmation dialog popup asks *"Do you want to confirm?"*
+       - Breakfast
+       - Lunch
+       - Evening Snacks
+       - Dinner
+     - (Note: Prices are tracked and viewed exclusively in the Monthly Mess Bill screen)
+     - Click **Confirm Booking** $\rightarrow$ Confirmation dialog popup asks *"Do you want to confirm this booking for [date]?"*
      - If confirmed: saves booking to database, updates bill, and redirects to dashboard. If cancelled, stays on screen to edit.
    - **View Bookings**:
      - Displays all bookings in chronological order as cards with status (`Active` or `Completed`).
@@ -82,7 +83,7 @@ java -cp "bin;lib/*" messmate.Main
 2. **Dashboard**: Access 3 options:
    - **Daily Bookings Summary**:
      - Select a date to view all registered students and their booked meals in a `JTable`.
-     - Displays daily kitchen totals at the bottom: Total Breakfast, Total Lunch, Total Snacks, Total Dinner, and Expected Revenue.
+     - Displays daily kitchen totals at the bottom: Total Breakfast, Total Lunch, Total Snacks, and Total Dinner.
    - **Meal Entry & Attendance**:
      - Select date and choose meal session from dropdown (Breakfast / Lunch / Evening Snacks / Dinner).
      - Displays table of registered students with interactive attendance checkboxes.

@@ -62,7 +62,9 @@ public class BillFrame extends BaseFrame {
         lblCounter.setAlignmentX(Component.CENTER_ALIGNMENT);
         topPanel.add(lblCounter);
 
-        JLabel lblRates = new JLabel("Fixed Rates: Breakfast ₹30 | Lunch ₹50 | Snacks ₹20 | Dinner ₹50", JLabel.CENTER);
+        JLabel lblRates = new JLabel(String.format("Fixed Rates: Breakfast ₹%d | Lunch ₹%d | Snacks ₹%d | Dinner ₹%d",
+                (int) MealPricing.BREAKFAST_PRICE, (int) MealPricing.LUNCH_PRICE,
+                (int) MealPricing.SNACKS_PRICE, (int) MealPricing.DINNER_PRICE), JLabel.CENTER);
         lblRates.setFont(new Font("SansSerif", Font.ITALIC, 11));
         lblRates.setAlignmentX(Component.CENTER_ALIGNMENT);
         topPanel.add(lblRates);

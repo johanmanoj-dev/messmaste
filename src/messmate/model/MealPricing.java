@@ -8,10 +8,10 @@ package messmate.model;
  */
 public class MealPricing {
     // Fixed meal rates in Rupees
-    public static final double BREAKFAST_PRICE = 30.0;
-    public static final double LUNCH_PRICE = 50.0;
-    public static final double SNACKS_PRICE = 20.0;
-    public static final double DINNER_PRICE = 50.0;
+    public static final double BREAKFAST_PRICE = 80.0;
+    public static final double LUNCH_PRICE = 130.0;
+    public static final double SNACKS_PRICE = 40.0;
+    public static final double DINNER_PRICE = 180.0;
 
     // Private constructor prevents instantiation
     private MealPricing() {

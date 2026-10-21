@@ -47,7 +47,6 @@ public class ViewBookingsFrame extends BaseFrame {
         Vector<String> columns = new Vector<>();
         columns.add("Meal Date");
         columns.add("Booked On");
-        columns.add("Total Cost");
         columns.add("Status");
 
         tableModel = new DefaultTableModel(new Vector<Vector<Object>>(), columns) {
@@ -88,7 +87,6 @@ public class ViewBookingsFrame extends BaseFrame {
                 Vector<Object> row = new Vector<>();
                 row.add(b.getMealDate().toString());
                 row.add(b.getBookedAt().toString());
-                row.add("₹ " + String.format("%.2f", b.getTotalCost()));
                 row.add(b.getStatus()); // "Active" or "Completed"
                 tableModel.addRow(row);
             }
@@ -119,8 +117,7 @@ public class ViewBookingsFrame extends BaseFrame {
                 + " - Breakfast: " + (b.isBreakfast() ? "Yes" + (b.isBreakfastAttended() ? " [Attended]" : "") : "No") + "\n"
                 + " - Lunch: " + (b.isLunch() ? "Yes" + (b.isLunchAttended() ? " [Attended]" : "") : "No") + "\n"
                 + " - Evening Snacks: " + (b.isSnacks() ? "Yes" + (b.isSnacksAttended() ? " [Attended]" : "") : "No") + "\n"
-                + " - Dinner: " + (b.isDinner() ? "Yes" + (b.isDinnerAttended() ? " [Attended]" : "") : "No") + "\n\n"
-                + "Total Amount: ₹ " + String.format("%.2f", b.getTotalCost());
+                + " - Dinner: " + (b.isDinner() ? "Yes" + (b.isDinnerAttended() ? " [Attended]" : "") : "No");
 
         JOptionPane.showMessageDialog(this, message, "Booking Details", JOptionPane.INFORMATION_MESSAGE);
     }
