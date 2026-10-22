@@ -41,13 +41,15 @@ java -cp "bin;lib/*" messmate.Main
 
 ## 2. Predefined Logins (Seed Accounts)
 
-| User Role | Username (Room No / Admin ID) | Password | Full Name |
+All 68 students from the CSE 2025-2029 A (S1) official batch are preloaded into MySQL. Each student's **ID Number** is their **Admission Number**, and their initial **Password is identical to their ID Number**.
+
+| User Role | ID Number (Admission No / Admin ID) | Password | Full Name |
 | :--- | :--- | :--- | :--- |
-| **Student** | `101` | `pass101` | Rahul Sharma |
-| **Student** | `102` | `pass102` | Sneha Patel |
-| **Student** | `103` | `pass103` | Amit Kumar |
-| **Student** | `104` | `pass104` | Ananya Nair |
-| **Student** | `105` | `pass105` | Rohan Das |
+| **Student** | `25CS008` | `25CS008` | ABHINAV SHINOJ |
+| **Student** | `25CS012` | `25CS012` | ABHISHEK P NAIR |
+| **Student** | `25CS013` | `25CS013` | ABIYA PRAKASH A B |
+| **Student** | `25CS017` | `25CS017` | ADWAITH ANIL |
+| *... (68 students loaded)* | *See DatabaseInitializer.java* | *Same as ID* | *Full Roster* |
 | **Administrator** | `admin` | `admin123` | Mess Administrator |
 | **Administrator** | `999` | `admin123` | Mess Warden |
 
@@ -56,7 +58,7 @@ java -cp "bin;lib/*" messmate.Main
 ## 3. Core Features & User Workflows
 
 ### 3.1 Student Route
-1. **Login**: Enter room number (e.g., `101`) and password (`pass101`).
+1. **Login**: Enter student ID number (e.g., `25CS008`) and password (`25CS008`).
 2. **Dashboard**: Access 4 options:
    - **Book a Meal**:
      - Enter meal date in `YYYY-MM-DD` format.
@@ -80,7 +82,7 @@ java -cp "bin;lib/*" messmate.Main
 
 ### 3.2 Admin Route
 1. **Login**: Enter admin ID (`admin`) and password (`admin123`).
-2. **Dashboard**: Access 3 options:
+2. **Dashboard**: Access 4 options:
    - **Daily Bookings Summary**:
      - Select a date to view all registered students and their booked meals in a `JTable`.
      - Displays daily kitchen totals at the bottom: Total Breakfast, Total Lunch, Total Snacks, and Total Dinner.
@@ -88,6 +90,10 @@ java -cp "bin;lib/*" messmate.Main
      - Select date and choose meal session from dropdown (Breakfast / Lunch / Evening Snacks / Dinner).
      - Displays table of registered students with interactive attendance checkboxes.
      - Check students as they enter the mess hall and click **Save Attendance to Database**.
+   - **Student Monthly Bills**:
+     - Select Month (Jan–Dec) and Year dropdowns to inspect monthly bills for all students in a `JTable`.
+     - Displays ID No, Student Name, individual meal counts (Breakfast, Lunch, Snacks, Dinner), total meals, and total bill in Rupees.
+     - Includes instant search bar (filter by ID No / Name) and bottom financial summary showing total collection.
    - **Logout**: Returns to login screen.
 
 ---
