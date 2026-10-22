@@ -13,7 +13,7 @@ public class AdminDashboardFrame extends BaseFrame {
     private Admin currentAdmin;
 
     public AdminDashboardFrame(Admin admin) {
-        super("Messmate - Admin Panel", 400, 320);
+        super("Messmate - Admin Panel", 400, 380);
         this.currentAdmin = admin;
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initUI();
@@ -30,8 +30,8 @@ public class AdminDashboardFrame extends BaseFrame {
 
         // 2. Center Buttons
         JPanel centerWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 10, 15));
-        buttonPanel.setPreferredSize(new Dimension(240, 140));
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 1, 10, 12));
+        buttonPanel.setPreferredSize(new Dimension(240, 185));
 
         JButton btnBookings = new JButton("Daily Bookings Summary");
         btnBookings.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -42,6 +42,11 @@ public class AdminDashboardFrame extends BaseFrame {
         btnEntry.setFont(new Font("SansSerif", Font.PLAIN, 14));
         btnEntry.addActionListener(e -> new AdminEntryFrame(currentAdmin, this).setVisible(true));
         buttonPanel.add(btnEntry);
+
+        JButton btnBills = new JButton("Student Monthly Bills");
+        btnBills.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        btnBills.addActionListener(e -> new AdminBillsFrame(currentAdmin, this).setVisible(true));
+        buttonPanel.add(btnBills);
 
         JButton btnLogout = new JButton("Logout");
         btnLogout.setFont(new Font("SansSerif", Font.PLAIN, 14));

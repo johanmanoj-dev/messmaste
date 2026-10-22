@@ -12,7 +12,7 @@ public class MealBooking {
     private int id;
     private int studentId;
     private String studentName; // Joined for display convenience
-    private String roomNumber;  // Joined for display convenience
+    private String idNumber;    // Joined for display convenience (student's ID / admission number)
     private LocalDate mealDate;
     private LocalDate bookedAt;
     private boolean breakfast;
@@ -87,12 +87,22 @@ public class MealBooking {
         this.studentName = studentName;
     }
 
-    public String getRoomNumber() {
-        return roomNumber;
+    public String getIdNumber() {
+        return idNumber;
     }
 
+    public void setIdNumber(String idNumber) {
+        this.idNumber = idNumber;
+    }
+
+    @Deprecated
+    public String getRoomNumber() {
+        return getIdNumber();
+    }
+
+    @Deprecated
     public void setRoomNumber(String roomNumber) {
-        this.roomNumber = roomNumber;
+        setIdNumber(roomNumber);
     }
 
     public LocalDate getMealDate() {

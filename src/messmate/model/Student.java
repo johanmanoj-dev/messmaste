@@ -21,9 +21,14 @@ public class Student extends User {
         super(id, username, password, fullName, "STUDENT");
     }
 
-    // Convenience method: for students, username is the room number
-    public String getRoomNumber() {
+    // Convenience method: for students, username is the ID number
+    public String getIdNumber() {
         return this.username;
+    }
+
+    @Deprecated
+    public String getRoomNumber() {
+        return getIdNumber();
     }
 
     /**
@@ -32,6 +37,6 @@ public class Student extends User {
      */
     @Override
     public String displayInfo() {
-        return "Student: " + fullName + " (Room No: " + username + ")";
+        return "Student: " + fullName + " (ID No: " + username + ")";
     }
 }

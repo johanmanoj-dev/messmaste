@@ -26,7 +26,7 @@ public class StudentDashboardFrame extends BaseFrame {
 
         // 1. Top Header Label
         JLabel lblWelcome = new JLabel(
-                "Welcome, " + currentStudent.getFullName() + " (Room " + currentStudent.getRoomNumber() + ")",
+                "Welcome, " + currentStudent.getFullName() + " (ID: " + currentStudent.getIdNumber() + ")",
                 JLabel.CENTER
         );
         lblWelcome.setFont(new Font("SansSerif", Font.BOLD, 15));

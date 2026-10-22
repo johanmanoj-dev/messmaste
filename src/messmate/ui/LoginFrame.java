@@ -45,7 +45,7 @@ public class LoginFrame extends BaseFrame {
         JPanel formWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 12));
 
-        formPanel.add(new JLabel("Username:"));
+        formPanel.add(new JLabel("ID Number:"));
         txtUsername = new JTextField(12);
         formPanel.add(txtUsername);
 
@@ -66,7 +66,7 @@ public class LoginFrame extends BaseFrame {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
 
-        JLabel lblHint = new JLabel("Default: Student '101' (pass101) | Admin 'admin' (admin123)", JLabel.CENTER);
+        JLabel lblHint = new JLabel("Default Student: '25CS008' (pass: 25CS008) | Admin: 'admin' (admin123)", JLabel.CENTER);
         lblHint.setFont(new Font("SansSerif", Font.PLAIN, 11));
         bottomPanel.add(lblHint, BorderLayout.CENTER);
 
@@ -91,7 +91,7 @@ public class LoginFrame extends BaseFrame {
             String password = new String(txtPassword.getPassword()).trim();
 
             if (username.isEmpty() || password.isEmpty()) {
-                showError("Please enter both username and password.");
+                showError("Please enter both ID number and password.");
                 return;
             }
 
@@ -99,7 +99,7 @@ public class LoginFrame extends BaseFrame {
                 User user = userService.login(username, password);
 
                 if (user == null) {
-                    showError("Invalid username or password.");
+                    showError("Invalid ID number or password.");
                     return;
                 }
 

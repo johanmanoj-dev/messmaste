@@ -62,7 +62,7 @@ public class AdminEntryFrame extends BaseFrame {
 
         // 2. Center Table (Interactive Checkboxes for Attendance)
         Vector<String> columns = new Vector<>();
-        columns.add("Room No");
+        columns.add("ID No");
         columns.add("Student Name");
         columns.add("Attended (Mark)");
 
@@ -117,7 +117,7 @@ public class AdminEntryFrame extends BaseFrame {
 
             for (MealBooking b : loadedBookings) {
                 Vector<Object> row = new Vector<>();
-                row.add(b.getRoomNumber() != null ? b.getRoomNumber() : "-");
+                row.add(b.getIdNumber() != null ? b.getIdNumber() : "-");
                 row.add(b.getStudentName() != null ? b.getStudentName() : "-");
 
                 boolean attended = false;

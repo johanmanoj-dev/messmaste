@@ -3,6 +3,7 @@ package messmate.service;
 import messmate.exception.InvalidBookingDateException;
 import messmate.exception.DuplicateBookingException;
 import messmate.model.MealBooking;
+import messmate.model.StudentBillSummary;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -59,4 +60,9 @@ public interface IBookingService {
      * Demonstrates Method Overloading (Module 2).
      */
     double calculateBill(int studentId, int month, int year) throws SQLException;
+
+    /**
+     * Fetches monthly bill summaries for all students for a specific month and year (Admin view).
+     */
+    List<StudentBillSummary> getMonthlyBillsForAllStudents(int month, int year) throws SQLException;
 }

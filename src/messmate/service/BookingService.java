@@ -4,6 +4,7 @@ import messmate.db.DBConnection;
 import messmate.exception.DuplicateBookingException;
 import messmate.exception.InvalidBookingDateException;
 import messmate.model.MealBooking;
+import messmate.model.StudentBillSummary;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -101,7 +102,7 @@ public class BookingService implements IBookingService {
     @Override
     public List<MealBooking> getBookingsByDate(LocalDate date) throws SQLException {
         List<MealBooking> list = new ArrayList<>();
-        String sql = "SELECT b.*, u.full_name, u.username AS room_no FROM bookings b "
+        String sql = "SELECT b.*, u.full_name, u.username AS id_no FROM bookings b "
                 + "JOIN users u ON b.student_id = u.id "
                 + "WHERE b.meal_date = ? ORDER BY u.username ASC";
 
@@ -113,7 +114,7 @@ public class BookingService implements IBookingService {
                 while (rs.next()) {
                     MealBooking mb = mapResultSet(rs);
                     mb.setStudentName(rs.getString("full_name"));
-                    mb.setRoomNumber(rs.getString("room_no"));
+                    mb.setIdNumber(rs.getString("id_no"));
                     list.add(mb);
                 }
             }
@@ -126,7 +127,7 @@ public class BookingService implements IBookingService {
         List<MealBooking> list = new ArrayList<>();
         String mealColumn = getColumnForMeal(mealType);
 
-        String sql = "SELECT b.*, u.full_name, u.username AS room_no FROM bookings b "
+        String sql = "SELECT b.*, u.full_name, u.username AS id_no FROM bookings b "
                 + "JOIN users u ON b.student_id = u.id "
                 + "WHERE b.meal_date = ? AND " + mealColumn + " = TRUE ORDER BY u.username ASC";
 
@@ -138,7 +139,7 @@ public class BookingService implements IBookingService {
                 while (rs.next()) {
                     MealBooking mb = mapResultSet(rs);
                     mb.setStudentName(rs.getString("full_name"));
-                    mb.setRoomNumber(rs.getString("room_no"));
+                    mb.setIdNumber(rs.getString("id_no"));
                     list.add(mb);
                 }
             }
@@ -196,6 +197,51 @@ public class BookingService implements IBookingService {
             }
         }
         return 0.0;
+    }
+
+    @Override
+    public List<StudentBillSummary> getMonthlyBillsForAllStudents(int month, int year) throws SQLException {
+        List<StudentBillSummary> list = new ArrayList<>();
+        String sql = "SELECT "
+                + "u.id AS student_id, "
+                + "u.username AS id_number, "
+                + "u.full_name AS student_name, "
+                + "COALESCE(SUM(CASE WHEN b.breakfast = TRUE THEN 1 ELSE 0 END), 0) AS b_count, "
+                + "COALESCE(SUM(CASE WHEN b.lunch = TRUE THEN 1 ELSE 0 END), 0) AS l_count, "
+                + "COALESCE(SUM(CASE WHEN b.snacks = TRUE THEN 1 ELSE 0 END), 0) AS s_count, "
+                + "COALESCE(SUM(CASE WHEN b.dinner = TRUE THEN 1 ELSE 0 END), 0) AS d_count, "
+                + "COALESCE(SUM(b.total_cost), 0.0) AS total_bill "
+                + "FROM users u "
+                + "LEFT JOIN bookings b ON u.id = b.student_id "
+                + "     AND MONTH(b.meal_date) = ? "
+                + "     AND YEAR(b.meal_date) = ? "
+                + "WHERE u.role = 'STUDENT' "
+                + "GROUP BY u.id, u.username, u.full_name "
+                + "ORDER BY u.username ASC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, month);
+            ps.setInt(2, year);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    StudentBillSummary sbs = new StudentBillSummary(
+                            rs.getInt("student_id"),
+                            rs.getString("id_number"),
+                            rs.getString("student_name"),
+                            rs.getInt("b_count"),
+                            rs.getInt("l_count"),
+                            rs.getInt("s_count"),
+                            rs.getInt("d_count"),
+                            rs.getDouble("total_bill")
+                    );
+                    list.add(sbs);
+                }
+            }
+        }
+        return list;
     }
 
     private String getColumnForMeal(String mealType) {

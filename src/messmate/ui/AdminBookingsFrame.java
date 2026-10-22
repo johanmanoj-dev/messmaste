@@ -61,7 +61,7 @@ public class AdminBookingsFrame extends BaseFrame {
 
         // 2. Center Table using Vector (Module 1 Vector Class & Module 4 JTable)
         Vector<String> columns = new Vector<>();
-        columns.add("Room No");
+        columns.add("ID No");
         columns.add("Student Name");
         columns.add("Breakfast");
         columns.add("Lunch");
@@ -110,7 +110,7 @@ public class AdminBookingsFrame extends BaseFrame {
 
             for (MealBooking b : list) {
                 Vector<Object> row = new Vector<>();
-                row.add(b.getRoomNumber() != null ? b.getRoomNumber() : "-");
+                row.add(b.getIdNumber() != null ? b.getIdNumber() : "-");
                 row.add(b.getStudentName() != null ? b.getStudentName() : "-");
                 row.add(b.isBreakfast() ? "Yes" : "-");
                 row.add(b.isLunch() ? "Yes" : "-");
